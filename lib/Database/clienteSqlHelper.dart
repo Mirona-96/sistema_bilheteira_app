@@ -55,4 +55,12 @@ class ClienteSQLHelper extends SqlHelper {
       return null;
     }
   }
+
+  contarClientes() {
+    Future<int> contarClientes() async {
+      Database db = await database;
+      List<Map<String, dynamic>> result = await db.query('clientes');
+      return result.length;
+    }
+  }
 }

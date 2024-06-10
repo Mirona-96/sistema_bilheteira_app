@@ -11,7 +11,7 @@ class AppDrawer extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              height: 200, // Fixed height for the header
+              height: 100, // Fixed height for the header
               child: const Center(
                 child: Text(
                   'Menu',

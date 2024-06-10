@@ -1,4 +1,5 @@
 import 'package:sistema_bilheteira_app_teste_2/Database/vendaSqlHelper.dart';
+import 'package:sistema_bilheteira_app_teste_2/Models/cliente.dart';
 import 'package:sistema_bilheteira_app_teste_2/Models/venda.dart';
 
 class VendaController {
@@ -20,5 +21,5 @@ class VendaController {
     await _databaseHelper.removerVenda(id);
   }
 
-  adicionarBilhete(Venda newCliente) {}
+  adicionarVenda(Venda newVenda) {}
 }

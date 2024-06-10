@@ -25,4 +25,12 @@ class ClienteController {
   getClienteById(String clienteId) async {
     return await _databaseHelper.buscarClientePorId(clienteId);
   }
+
+  contarClientes() {
+    final ClienteSQLHelper _databaseHelper = ClienteSQLHelper();
+
+    Future<int> contarClientes() async {
+      return await _databaseHelper.contarClientes();
+    }
+  }
 }

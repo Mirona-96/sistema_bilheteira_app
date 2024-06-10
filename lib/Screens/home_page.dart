@@ -1,10 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:sistema_bilheteira_app_teste_2/Components/cores.dart';
-import 'package:sistema_bilheteira_app_teste_2/Models/menuItems.dart';
+import 'package:sistema_bilheteira_app_teste_2/Controller/bilhete_controller.dart';
+import 'package:sistema_bilheteira_app_teste_2/Controller/cliente_controller.dart';
+import 'package:sistema_bilheteira_app_teste_2/Screens/app_drawer.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-//  final controller = MenuItems();
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final ClienteController _clienteController = ClienteController();
+  final BilheteController _bilheteController = BilheteController();
+  int _numClientes = 0;
+  int _numBilhetes = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    int? numClientes = await _clienteController.contarClientes();
+    int? numBilhetes = await _bilheteController.contarBilhetes();
+    setState(() {
+      _numClientes = numClientes ?? 0; // Se numClientes for null, atribui 0
+      _numBilhetes = numBilhetes ?? 0; // Se numBilhetes for null, atribui 0
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,58 +37,22 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Sistema de Gestão de Bilheteira'),
       ),
-      drawer: Drawer(
-        child: Container(
-          color: primaryColor, // Set the background color for the entire drawer
-          child: Column(
-            children: [
-              Container(
-                height: 200, // Fixed height for the header
-                child: const Center(
-                  child: Text(
-                    'Menu',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                    ),
-                  ),
-                ),
-              ),
-
-              //o menu principal
-              Expanded( 
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: menuItems.map((menuItem) {
-                    return ListTile(
-                      leading: Icon(menuItem.icon, color: Colors.white),
-                      title: Text(menuItem.titulo,
-                          style: const TextStyle(color: Colors.white)),
-                      onTap: () {
-                        Navigator.pushNamed(context, menuItem.pagina);
-                      },
-                    );
-                  }).toList(),
-                ),
-              ),
-
-              //o log out
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.white),
-                title:
-                    const Text('Sair', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  // Handle logout action
-                  Navigator.pop(context); // Close the drawer
-                  // Add your logout logic here
-                },
-              ),
-            ],
-          ),
+      drawer: AppDrawer(),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Número de Clientes Registrados: $_numClientes',
+              style: TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Número de Bilhetes Registrados: $_numBilhetes',
+              style: TextStyle(fontSize: 20),
+            ),
+          ],
         ),
-      ),
-      body: const Center(
-        child: Text('Bem vindo'),
       ),
     );
   }

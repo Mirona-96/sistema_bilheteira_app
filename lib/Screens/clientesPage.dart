@@ -144,12 +144,12 @@ class _ClientesPageState extends State<ClientesPage> {
         itemBuilder: (context, index) {
           final cliente = _clientes[index];
           return ListTile(
-            title: Text(_clientes[index].nome),
+            title: Text("Nome: " + _clientes[index].nome),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_clientes[index].contato),
-                Text(_clientes[index].email),
+                Text('Contacto: ' + _clientes[index].contato),
+                Text('Email: ' + _clientes[index].email),
               ],
             ),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[

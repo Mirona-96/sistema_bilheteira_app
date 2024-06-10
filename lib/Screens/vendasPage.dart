@@ -23,8 +23,12 @@ class _VendasPageState extends State<VendasPage> {
   final VendaController _vendaController = VendaController();
   final BilheteController _bilheteController = BilheteController();
   final ClienteController _clienteController = ClienteController();
-  List<Venda> _vendas = [];
 
+  List<Bilhete> _bilhetes = [];
+  List<Venda> _vendas = [];
+  List<Cliente> _clientes = [];
+  Map<String, String> _clienteNomes = {};
+  Map<String, String> _bilheteEventos = {};
   @override
   void initState() {
     super.initState();
@@ -33,17 +37,35 @@ class _VendasPageState extends State<VendasPage> {
 
   Future<void> _fetchVendas() async {
     List<Venda> vendas = await _vendaController.fetchVendas();
+    List<Cliente> clientes = await _clienteController.buscarTodos();
+    List<Bilhete> bilhetes = await _bilheteController.fetchBilhetes();
+
+    for (var cliente in clientes) {
+      _clienteNomes[cliente.id] = cliente.nome;
+    }
+
+    // Preenche o mapa de bilhetes
+    for (var bilhete in bilhetes) {
+      _bilheteEventos[bilhete.id] = bilhete.evento;
+    }
+
     setState(() {
       _vendas = vendas;
+      _clientes = clientes;
+      _bilhetes = bilhetes;
     });
   }
 
-  void _vendaDialog() async {
+  void _vendaDialog({Venda? venda}) async {
     final _formKey = GlobalKey<FormState>();
-    final idController = TextEditingController(text: const Uuid().v4());
-    final clienteIdController = TextEditingController();
-    final bilheteIdController = TextEditingController();
-    final quantidadeController = TextEditingController();
+    final idController =
+        TextEditingController(text: venda?.id ?? const Uuid().v4());
+    final clienteIdController =
+        TextEditingController(text: venda?.idCliente ?? '');
+    final bilheteIdController =
+        TextEditingController(text: venda?.idBilhete ?? '');
+    final quantidadeController =
+        TextEditingController(text: venda?.quantidade.toString() ?? '');
     final precoTotalController = TextEditingController();
     final dataVendaController = TextEditingController(
         text: DateFormat('dd-MM-yyyy').format(DateTime.now()));
@@ -58,17 +80,17 @@ class _VendasPageState extends State<VendasPage> {
           ]),
           builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
+              return Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
+              return Center(child: Text('Error: ${snapshot.error}'));
             }
 
             List<Cliente> clientes = snapshot.data![0];
             List<Bilhete> bilhetes = snapshot.data![1];
 
             return AlertDialog(
-              title: Text('Realizar Venda'),
+              title: Text(venda == null ? 'Registrar Venda' : 'Editar Venda'),
               content: Form(
                 key: _formKey,
                 child: SingleChildScrollView(
@@ -135,22 +157,6 @@ class _VendasPageState extends State<VendasPage> {
                           return null;
                         },
                       ),
-                      TextFormField(
-                        decoration: InputDecoration(
-                          icon: Icon(Icons.date_range),
-                          hintText: 'Data da Venda',
-                          labelText: 'Data da Venda',
-                        ),
-                        onTap: () async {
-                          FocusScope.of(context).requestFocus(FocusNode());
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor insira a data da venda';
-                          }
-                          return null;
-                        },
-                      ),
                     ],
                   ),
                 ),
@@ -162,8 +168,8 @@ class _VendasPageState extends State<VendasPage> {
                     if (_formKey.currentState!.validate()) {
                       Venda novaVenda = Venda(
                         id: idController.text,
-                        clienteId: clienteIdController.text,
-                        bilheteId: bilheteIdController.text,
+                        idCliente: clienteIdController.text,
+                        idBilhete: bilheteIdController.text,
                         quantidade: int.parse(quantidadeController.text),
                         precoTotal: double.parse(precoTotalController.text),
                         dataVenda: DateFormat('dd-MM-yyyy')
@@ -194,24 +200,39 @@ class _VendasPageState extends State<VendasPage> {
         itemCount: _vendas.length,
         itemBuilder: (context, index) {
           final venda = _vendas[index];
+          final clienteNome =
+              _clienteNomes[venda.idCliente] ?? 'Cliente desconhecido';
+          final bilheteEvento =
+              _bilheteEventos[venda.idBilhete] ?? 'Bilhete desconhecido';
+
           return ListTile(
-            title: FutureBuilder(
-              future: Future.wait([
-                _clienteController.getClienteById(venda.clienteId),
-                _bilheteController.getBilheteById(venda.bilheteId)
-              ] as Iterable<Future>),
-              builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                }
-                if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                }
-                Cliente cliente = snapshot.data![0];
-                Bilhete bilhete = snapshot.data![1];
-                return Text(
-                    'Cliente: ${cliente.nome}, Bilhete: ${bilhete.evento}, Quantidade: ${venda.quantidade}, Preço Total: ${venda.precoTotal.toString()}, Data Venda: ${DateFormat('dd-MM-yyyy').format(venda.dataVenda)}');
-              },
+            title: Text(_vendas[index].id),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Cliente: $clienteNome'),
+                Text('Bilhete: ${bilheteEvento}'),
+                Text('Quantidade: ${venda.quantidade}'),
+                Text('Preço Total: ${venda.precoTotal.toString()} MT'),
+                Text(
+                    'Data Venda: ${DateFormat('dd-MM-yyyy').format(venda.dataVenda)}'),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: () async {
+                      _vendaDialog(venda: venda);
+                    }),
+                IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () async {
+                      await _vendaController.remover(venda.id);
+                      _fetchVendas();
+                    }),
+              ],
             ),
           );
         },

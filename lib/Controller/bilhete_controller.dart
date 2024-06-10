@@ -23,4 +23,6 @@ class BilheteController {
   Future<Bilhete?> getBilheteById(String bilheteId) async {
     return await _databaseHelper.buscarBilhetePorId(bilheteId);
   }
+
+  contarBilhetes() {}
 }
